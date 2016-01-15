@@ -9,7 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import marinelli.john.mockserver.dummy.DummyContent;
+import marinelli.john.mockserver.user.UserContent;
+import marinelli.john.mockserver.user.UserModel;
 
 /**
  * A fragment representing a single User detail screen.
@@ -25,9 +26,9 @@ public class UserDetailFragment extends Fragment {
     public static final String ARG_ITEM_ID = "item_id";
 
     /**
-     * The dummy content this fragment is presenting.
+     * The content this fragment is presenting.
      */
-    private DummyContent.DummyItem mItem;
+    private UserModel mItem;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -44,12 +45,12 @@ public class UserDetailFragment extends Fragment {
             // Load the dummy content specified by the fragment
             // arguments. In a real-world scenario, use a Loader
             // to load content from a content provider.
-            mItem = DummyContent.ITEM_MAP.get(getArguments().getString(ARG_ITEM_ID));
+            mItem = UserContent.ITEM_MAP.get(getArguments().getString(ARG_ITEM_ID));
 
             Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
             if (appBarLayout != null) {
-                appBarLayout.setTitle(mItem.content);
+                appBarLayout.setTitle(mItem.mName);
             }
         }
     }
@@ -61,7 +62,7 @@ public class UserDetailFragment extends Fragment {
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
-            ((TextView) rootView.findViewById(R.id.user_detail)).setText(mItem.details);
+            ((TextView) rootView.findViewById(R.id.user_detail)).setText(mItem.mBio);
         }
 
         return rootView;

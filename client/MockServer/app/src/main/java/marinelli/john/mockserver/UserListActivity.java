@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.design.widget.FloatingActionButton;
@@ -14,9 +13,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
-import marinelli.john.mockserver.dummy.DummyContent;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import marinelli.john.mockserver.user.DummyContent;
+import marinelli.john.mockserver.user.UserContent;
+import marinelli.john.mockserver.user.UserModel;
 
 import java.util.List;
 
@@ -54,9 +65,40 @@ public class UserListActivity extends AppCompatActivity {
             }
         });
 
-        View recyclerView = findViewById(R.id.user_list);
+        final View recyclerView = findViewById(R.id.user_list);
         assert recyclerView != null;
-        setupRecyclerView((RecyclerView) recyclerView);
+
+        JsonArrayRequest apireq = new JsonArrayRequest(Request.Method.GET,
+                "http://arcane-savannah-2535.herokuapp.com",
+                null,
+                new Response.Listener<JSONArray>() {
+                    @Override
+                    public void onResponse(JSONArray response) {
+                        int len = response.length();
+                        for (int i = 0; i < len; ++i) {
+                            try {
+                                JSONObject jsonUser = new JSONObject(response.getString(i));
+                                UserModel user = new UserModel(jsonUser);
+                                UserContent.ITEMS.add(user);
+                                UserContent.ITEM_MAP.put(user.mName, user);
+                            } catch (org.json.JSONException e) {
+                                System.console().printf("%s", e.toString());
+                            }
+
+                        }
+                        setupRecyclerView((RecyclerView) recyclerView);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError err) {
+                        System.console().printf("%s", err.toString());
+                        return;
+                    }
+                }
+        );
+
+        Volley.newRequestQueue(this).add(apireq);
 
         if (findViewById(R.id.user_detail_container) != null) {
             // The detail container view will be present only in the
@@ -68,15 +110,15 @@ public class UserListActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DummyContent.ITEMS));
+        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(UserContent.ITEMS));
     }
 
     public class SimpleItemRecyclerViewAdapter
             extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
-        private final List<DummyContent.DummyItem> mValues;
+        private final List<UserModel> mValues;
 
-        public SimpleItemRecyclerViewAdapter(List<DummyContent.DummyItem> items) {
+        public SimpleItemRecyclerViewAdapter(List<UserModel> items) {
             mValues = items;
         }
 
@@ -90,15 +132,15 @@ public class UserListActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             holder.mItem = mValues.get(position);
-            holder.mIdView.setText(mValues.get(position).id);
-            holder.mContentView.setText(mValues.get(position).content);
+            holder.mIdView.setText(mValues.get(position).mName);
+            holder.mContentView.setText(mValues.get(position).mBio);
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (mTwoPane) {
                         Bundle arguments = new Bundle();
-                        arguments.putString(UserDetailFragment.ARG_ITEM_ID, holder.mItem.id);
+                        arguments.putString(UserDetailFragment.ARG_ITEM_ID, holder.mItem.mName);
                         UserDetailFragment fragment = new UserDetailFragment();
                         fragment.setArguments(arguments);
                         getSupportFragmentManager().beginTransaction()
@@ -107,7 +149,7 @@ public class UserListActivity extends AppCompatActivity {
                     } else {
                         Context context = v.getContext();
                         Intent intent = new Intent(context, UserDetailActivity.class);
-                        intent.putExtra(UserDetailFragment.ARG_ITEM_ID, holder.mItem.id);
+                        intent.putExtra(UserDetailFragment.ARG_ITEM_ID, holder.mItem.mName);
 
                         context.startActivity(intent);
                     }
@@ -124,7 +166,7 @@ public class UserListActivity extends AppCompatActivity {
             public final View mView;
             public final TextView mIdView;
             public final TextView mContentView;
-            public DummyContent.DummyItem mItem;
+            public UserModel mItem;
 
             public ViewHolder(View view) {
                 super(view);
