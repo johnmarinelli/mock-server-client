@@ -1,17 +1,18 @@
-package marinelli.john.mockserver;
+package marinelli.john.mockclient;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,15 +20,16 @@ import android.widget.Toast;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import marinelli.john.mockserver.user.DummyContent;
-import marinelli.john.mockserver.user.UserContent;
-import marinelli.john.mockserver.user.UserModel;
+import marinelli.john.mockclient.user.UserContent;
+import marinelli.john.mockclient.user.UserModel;
+import marinelli.john.mockserver.R;
 
 import java.util.List;
 
@@ -47,23 +49,19 @@ public class UserListActivity extends AppCompatActivity {
      */
     private boolean mTwoPane;
 
+    private ProgressBar mProgressBar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_list);
 
+        mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        mProgressBar.setVisibility(View.VISIBLE);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         final View recyclerView = findViewById(R.id.user_list);
         assert recyclerView != null;
@@ -87,13 +85,13 @@ public class UserListActivity extends AppCompatActivity {
 
                         }
                         setupRecyclerView((RecyclerView) recyclerView);
+                        mProgressBar.setVisibility(View.GONE);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError err) {
-                        System.console().printf("%s", err.toString());
-                        return;
+                        Toast.makeText(getApplicationContext(), err.toString(), Toast.LENGTH_LONG).show();
                     }
                 }
         );
@@ -132,8 +130,25 @@ public class UserListActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             holder.mItem = mValues.get(position);
-            holder.mIdView.setText(mValues.get(position).mName);
-            holder.mContentView.setText(mValues.get(position).mBio);
+            int maxDim = 0;
+
+            // Set profile pic
+            ImageRequest imgreq = new ImageRequest(holder.mItem.mProfileImageUrl,
+                    new Response.Listener<Bitmap>() {
+                        @Override
+                        public void onResponse(Bitmap response) {
+                            holder.mItem.mProfileImage = response;
+                            holder.mProfilePicView.setImageBitmap(response);
+                        }
+                    }, maxDim, maxDim, ImageView.ScaleType.CENTER, null,
+                    new Response.ErrorListener() {
+                        public void onErrorResponse(VolleyError err) {
+                            Toast.makeText(getApplicationContext(), err.toString(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+            );
+
+            holder.mContentView.setText(mValues.get(position).mName);
 
             holder.mView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -155,6 +170,8 @@ public class UserListActivity extends AppCompatActivity {
                     }
                 }
             });
+
+            Volley.newRequestQueue(getApplicationContext()).add(imgreq);
         }
 
         @Override
@@ -164,15 +181,15 @@ public class UserListActivity extends AppCompatActivity {
 
         public class ViewHolder extends RecyclerView.ViewHolder {
             public final View mView;
-            public final TextView mIdView;
+            public final ImageView mProfilePicView;
             public final TextView mContentView;
             public UserModel mItem;
 
             public ViewHolder(View view) {
                 super(view);
                 mView = view;
-                mIdView = (TextView) view.findViewById(R.id.id);
                 mContentView = (TextView) view.findViewById(R.id.content);
+                mProfilePicView = (ImageView) view.findViewById(R.id.profile_pic);
             }
 
             @Override

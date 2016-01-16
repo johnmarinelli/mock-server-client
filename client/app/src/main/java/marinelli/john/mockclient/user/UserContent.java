@@ -1,4 +1,4 @@
-package marinelli.john.mockserver.user;
+package marinelli.john.mockclient.user;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -6,9 +6,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 
 import org.json.JSONArray;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

@@ -1,4 +1,6 @@
-package marinelli.john.mockserver.user;
+package marinelli.john.mockclient.user;
+
+import android.graphics.Bitmap;
 
 import org.json.JSONObject;
 
@@ -16,6 +18,8 @@ public class UserModel {
     public int mAge = 0;
     public String mBio = "";
     public Date mCreatedAt = new Date();
+
+    public Bitmap mProfileImage = null;
 
     public UserModel(final JSONObject json) {
         try {
